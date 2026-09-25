@@ -1,0 +1,4 @@
+apiVersion: v2
+name: secure-ai-gateway
+version: 0.1.0
+type: application
