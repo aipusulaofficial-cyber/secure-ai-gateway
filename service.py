@@ -1,13 +1,12 @@
-from observability import PrincipalObservabilityMiddleware
 from fastapi import FastAPI, HTTPException
 from opentelemetry import trace
 from pydantic import BaseModel, Field
 
-from gateway_domain import authorize
+from gateway_domain import RateLimiter, authorize
 from observability import configure_observability, get_logger, PrincipalObservabilityMiddleware
 
 configure_observability()
-logger = get_logger(__name__)
+logger = get_logger(__name__)\nrate_limiter = RateLimiter(limit=60, window_s=60.0)
 
 app = FastAPI(title="secure-ai-gateway", version="1.0.0")
 app.add_middleware(PrincipalObservabilityMiddleware)
@@ -31,7 +30,7 @@ def ready() -> dict[str, str]:
 
 @app.post("/v1/gateway")
 def handle(request: Request) -> dict[str, bool | str]:
-    with tracer.start_as_current_span("secure-ai-gateway.authorize"):
+    if not rate_limiter.allow(request.key):\n        raise HTTPException(status_code=429, detail="rate limit exceeded")\n    with tracer.start_as_current_span("secure-ai-gateway.authorize"):
         try:
             decision = authorize(
                 request.payload.get("token", ""),
