@@ -1,21 +1,46 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
 from opentelemetry import trace
-from gateway_domain import *
-try:
- from opentelemetry.sdk.resources import Resource
- from opentelemetry.sdk.trace import TracerProvider
- from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
- p=TracerProvider(resource=Resource.create({"service.name":"secure-ai-gateway"}));p.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()));trace.set_tracer_provider(p)
-except Exception: pass
-app=FastAPI(title="secure-ai-gateway",version="1.0.0");tracer=trace.get_tracer("secure-ai-gateway")
-class Request(BaseModel): key:str; payload:dict={}
+from pydantic import BaseModel, Field
+
+from gateway_domain import authorize
+from observability import configure_observability, get_logger
+
+configure_observability()
+logger = get_logger(__name__)
+
+app = FastAPI(title="secure-ai-gateway", version="1.0.0")
+tracer = trace.get_tracer("secure-ai-gateway")
+
+
+class Request(BaseModel):
+    key: str
+    payload: dict = Field(default_factory=dict)
+
+
 @app.get("/health/live")
-def live(): return {"status":"ok"}
+def live() -> dict[str, str]:
+    return {"status": "ok"}
+
+
 @app.get("/health/ready")
-def ready(): return {"status":"ready"}
+def ready() -> dict[str, str]:
+    return {"status": "ready"}
+
+
 @app.post("/v1/gateway")
-def handle(r:Request):
- with tracer.start_as_current_span("secure-ai-gateway.domain"):
-  try: d=authorize(r.payload.get("token",""),r.payload.get("scope","inference")); return {"allowed":d.allowed,"reason":d.reason}
-  except (ValueError,KeyError) as e: raise HTTPException(status_code=400,detail=str(e)) from e
+def handle(request: Request) -> dict[str, bool | str]:
+    with tracer.start_as_current_span("secure-ai-gateway.authorize"):
+        try:
+            decision = authorize(
+                request.payload.get("token", ""),
+                request.payload.get("scope", "inference"),
+            )
+            logger.info(
+                "gateway_decision key=%s allowed=%s reason=%s",
+                request.key,
+                decision.allowed,
+                decision.reason,
+            )
+            return {"allowed": decision.allowed, "reason": decision.reason}
+        except (ValueError, KeyError, TypeError) as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
