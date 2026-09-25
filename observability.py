@@ -72,18 +72,14 @@ class PrincipalObservabilityMiddleware(BaseHTTPMiddleware):
         error_type = None
         tracer = trace.get_tracer("principal-http")
         try:
-            with tracer.start_as_current_span(
-                f"{request.method} {request.url.path}"
-            ) as span:
+            with tracer.start_as_current_span(f"{request.method} {request.url.path}") as span:
                 span.set_attribute("request_id", request_id)
                 span.set_attribute("correlation_id", correlation_id)
                 response = await call_next(request)
                 status = response.status_code
                 response.headers["x-request-id"] = request_id
                 response.headers["x-correlation-id"] = correlation_id
-                response.headers["x-latency-ms"] = (
-                    f"{(time.perf_counter() - start) * 1000:.3f}"
-                )
+                response.headers["x-latency-ms"] = f"{(time.perf_counter() - start) * 1000:.3f}"
                 return response
         except Exception as exc:
             error_type = type(exc).__name__
