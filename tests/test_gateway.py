@@ -15,7 +15,14 @@ def test_gateway_endpoint_accepts_authenticated_request(text):
     client = TestClient(app)
     response = client.post(
         "/v1/gateway",
-        json={"key": "u", "payload": {"token": "Bearer inference", "scope": "inference", "text": text}},
+        json={
+            "key": "u",
+            "payload": {
+                "token": "Bearer inference",
+                "scope": "inference",
+                "text": text,
+            },
+        },
     )
     assert response.status_code == 200
     assert response.json() == {"allowed": True, "reason": "ok"}
