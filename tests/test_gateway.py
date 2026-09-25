@@ -1,5 +1,5 @@
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
 
 from gateway_domain import Decision, RateLimiter, authorize
 from service import app

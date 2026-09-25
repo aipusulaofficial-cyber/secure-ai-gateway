@@ -1,4 +1,7 @@
-import json, logging, os
+import json
+import logging
+import os
+
 from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
@@ -52,11 +55,12 @@ def get_logger(name):
     return l
 
 
-import time, uuid
+import time
+import uuid
+
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
-from opentelemetry import trace
 
 
 class PrincipalObservabilityMiddleware(BaseHTTPMiddleware):

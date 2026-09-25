@@ -4,9 +4,9 @@ from pydantic import BaseModel, Field
 
 from gateway_domain import RateLimiter, authorize
 from observability import (
+    PrincipalObservabilityMiddleware,
     configure_observability,
     get_logger,
-    PrincipalObservabilityMiddleware,
 )
 
 configure_observability()
