@@ -18,7 +18,6 @@ def get_logger(name):
     h=logging.StreamHandler();h.setFormatter(JsonFormatter());l=logging.getLogger(name);l.handlers[:]=[h];l.setLevel(os.getenv("LOG_LEVEL","INFO"));return l
 
 
-from __future__ import annotations
 import time,uuid
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
