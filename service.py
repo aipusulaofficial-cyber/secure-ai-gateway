@@ -1,3 +1,4 @@
+from observability import PrincipalObservabilityMiddleware
 from fastapi import FastAPI, HTTPException
 from opentelemetry import trace
 from pydantic import BaseModel, Field
@@ -9,6 +10,7 @@ configure_observability()
 logger = get_logger(__name__)
 
 app = FastAPI(title="secure-ai-gateway", version="1.0.0")
+app.add_middleware(PrincipalObservabilityMiddleware)
 tracer = trace.get_tracer("secure-ai-gateway")
 
 
