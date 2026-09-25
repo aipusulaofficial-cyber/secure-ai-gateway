@@ -81,7 +81,9 @@ class PrincipalObservabilityMiddleware(BaseHTTPMiddleware):
                 status = response.status_code
                 response.headers["x-request-id"] = request_id
                 response.headers["x-correlation-id"] = correlation_id
-                response.headers["x-latency-ms"] = f"{(time.perf_counter() - start) * 1000:.3f}"
+                response.headers["x-latency-ms"] = (
+                    f"{(time.perf_counter() - start) * 1000:.3f}"
+                )
                 return response
         except Exception as exc:
             error_type = type(exc).__name__
