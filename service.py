@@ -3,7 +3,7 @@ from opentelemetry import trace
 from pydantic import BaseModel, Field
 
 from gateway_domain import authorize
-from observability import configure_observability, get_logger
+from observability import configure_observability, get_logger, PrincipalObservabilityMiddleware
 
 configure_observability()
 logger = get_logger(__name__)
