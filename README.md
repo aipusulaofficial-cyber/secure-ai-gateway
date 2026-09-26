@@ -1,29 +1,33 @@
 # Secure AI Gateway
 
-**Principal-level reference implementation** focused on authentication, authorization, rate limiting, policy enforcement, threat-aware request handling, and auditability.
+A security boundary for AI services providing authentication, authorization, rate limiting, policy enforcement, threat-aware request handling and auditability.
 
-## Engineering intent
-- Clear domain boundaries and replaceable infrastructure adapters
-- Explicit contracts, validation, and failure semantics
-- Deterministic tests with external dependencies isolated
-- Operational readiness through health checks, CI, and security validation
-- Architecture decisions documented so trade-offs are reviewable
+## Request flow
+```text
+client -> authentication -> authorization -> rate limit -> policy -> upstream AI service
+                                                |
+                                             audit
+```
 
-## System design
-The repository is structured around a small set of explicit responsibilities rather than framework-driven coupling. Request/event handling, domain policy, infrastructure adapters, and operational concerns are kept separable so individual components can evolve without forcing a system-wide rewrite.
+## Security contracts
+- Authentication and authorization are separate decisions.
+- Rate limiting bounds resource consumption at the edge.
+- Policy enforcement happens before upstream execution.
+- Audit context captures decision-relevant metadata without exposing secrets.
+- Denied requests are explicit failures, not degraded successes.
 
-## Quality bar
-- **Correctness:** contract and edge-case tests cover expected and failure paths
-- **Reliability:** bounded work, explicit timeouts/failures, and health signals where applicable
-- **Security:** least-privilege boundaries, input validation, and safe defaults
-- **Observability:** correlation/context propagation and actionable operational signals
-- **Delivery:** reproducible CI validation before changes are considered complete
+## Reliability
+The gateway is designed to protect upstream services from malformed, unauthorized and excessive traffic. Timeouts, retries and dependency failures are represented explicitly.
 
-## Principal engineering contract
-See [docs/PRINCIPAL-ENGINEERING.md](docs/PRINCIPAL-ENGINEERING.md) for the reviewable engineering contract, NFRs, and change-safety checklist.
+## Runtime & deployment
+The repository includes Kubernetes/Helm deployment, Terraform, production tests, load tests, observability code and deployment verification documentation.
 
-## Architecture & decisions
-See [ARCHITECTURE.md](ARCHITECTURE.md) and the ADRs directory for system boundaries, key trade-offs, and extension points.
+## Evidence
+- Architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
+- Contracts: [docs/CONTRACTS.md](docs/CONTRACTS.md)
+- Failure matrix: [docs/FAILURE-MATRIX.md](docs/FAILURE-MATRIX.md)
+- Operations: [docs/OPERATIONS.md](docs/OPERATIONS.md)
+- SLO: [docs/SLO.md](docs/SLO.md)
+- ADRs: [ADRs](ADRs/)
 
-## Engineering principle
-The goal is not to maximize framework complexity; it is to make important behavior **explicit, testable, observable, and replaceable**.
+CI, production tests and security/SBOM checks are executable release gates.
