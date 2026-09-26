@@ -41,7 +41,12 @@ def authorize(token: str, required_scope: str) -> Decision:
     if not secret:
         return Decision(False, "authentication_not_configured")
     try:
-        claims = jwt.decode(token[7:].strip(), secret, algorithms=["HS256"], options={"require": ["sub", "exp"]})
+        claims = jwt.decode(
+            token[7:].strip(),
+            secret,
+            algorithms=["HS256"],
+            options={"require": ["sub", "exp"]},
+        )
     except jwt.PyJWTError:
         return Decision(False, "invalid_credentials")
     raw_scopes = claims.get("scope", "")
