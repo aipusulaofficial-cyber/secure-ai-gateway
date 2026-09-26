@@ -1,16 +1,36 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ai-platform
+---
 apiVersion: apps/v1
 kind: Deployment
-metadata: {name: secure-ai-gateway}
+metadata:
+  name: secure-ai-gateway
+  namespace: ai-platform
 spec:
- replicas: 2
- selector: {matchLabels: {app: secure-ai-gateway}}
- template:
-  metadata: {labels: {app: secure-ai-gateway}}
-  spec:
-   containers:
-   - name: api
-     image: secure-ai-gateway:latest
-     ports: [{containerPort: 8000}]
-     readinessProbe: {httpGet: {path: /health/ready, port: 8000}}
-     livenessProbe: {httpGet: {path: /health/live, port: 8000}}
-     resources: {requests: {cpu: 100m, memory: 128Mi}, limits: {cpu: "1", memory: 512Mi}}
+  replicas: 2
+  selector: {matchLabels: {app: secure-ai-gateway}}
+  template:
+    metadata: {labels: {app: secure-ai-gateway}}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: api
+          image: secure-ai-gateway:0.1.0
+          imagePullPolicy: IfNotPresent
+          ports: [{containerPort: 8000}]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: ["ALL"]}
+            seccompProfile: {type: RuntimeDefault}
+          readinessProbe: {httpGet: {path: /health/ready, port: 8000}, initialDelaySeconds: 5, periodSeconds: 10}
+          livenessProbe: {httpGet: {path: /health/live, port: 8000}, initialDelaySeconds: 10, periodSeconds: 20}
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: "1", memory: 512Mi}
