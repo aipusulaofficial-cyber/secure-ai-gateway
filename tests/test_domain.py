@@ -1,11 +1,23 @@
+import jwt
 import pytest
 
 from gateway_domain import RateLimiter, authorize
 
+SECRET = "test-secret"
 
-def test_authorization_and_rate_limit():
-    assert authorize("Bearer inference", "inference").allowed
-    assert not authorize("Bearer other", "inference").allowed
+
+def token(scope: str = "inference") -> str:
+    return jwt.encode(
+        {"sub": "test-user", "exp": 4102444800, "scope": scope},
+        SECRET,
+        algorithm="HS256",
+    )
+
+
+def test_authorization_and_rate_limit(monkeypatch):
+    monkeypatch.setenv("AI_GATEWAY_JWT_SECRET", SECRET)
+    assert authorize(f"Bearer {token()}", "inference").allowed
+    assert not authorize(f"Bearer {token('other')}", "inference").allowed
     limiter = RateLimiter(1)
     assert limiter.allow("k", 0)
     assert not limiter.allow("k", 1)
