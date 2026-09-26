@@ -1,16 +1,19 @@
-import pytest
 import jwt
+import pytest
 from fastapi.testclient import TestClient
 
 from gateway_domain import Decision, RateLimiter, authorize
 from service import app
 
-
 SECRET = "test-secret"
 
 
 def token(scope: str = "inference") -> str:
-    return jwt.encode({"sub": "test-user", "exp": 4102444800, "scope": scope}, SECRET, algorithm="HS256")
+    return jwt.encode(
+        {"sub": "test-user", "exp": 4102444800, "scope": scope},
+        SECRET,
+        algorithm="HS256",
+    )
 
 
 def test_allows_authenticated_safe_request(monkeypatch):
