@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,14 +16,17 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
+      - name: Install test runner
+        run: python -m pip install --disable-pip-version-check pytest
       - name: Run platform policy tests
-        run: |
-          python -m pytest platform/test_policy_gates.py -q
+        env:
+          PYTHONPATH: platform
+        run: python -m pytest platform/test_policy_gates.py -q
       - name: Security gate
         run: |
           python -m pip install --disable-pip-version-check pip-audit
-          python -m pip_audit || true
+          python -m pip_audit
       - name: Evidence gate
         run: |
           test -f platform/CONTRACT-VERIFICATION.md
