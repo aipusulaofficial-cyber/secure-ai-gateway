@@ -1,0 +1,23 @@
+version: "1"
+name: aipusula-platform-flow
+trace:
+  required: true
+  fields: [request_id, trace_id]
+stages:
+  - gateway
+  - policy
+  - agent_or_rag
+  - inference
+  - evaluation
+  - registry
+  - observability
+  - cost
+decision:
+  allowed_values: [ALLOW, DENY, FAIL]
+evidence:
+  required_fields:
+    - request_id
+    - stage
+    - decision
+    - timestamp
+  no_fabricated_metrics: true
