@@ -1,0 +1,11 @@
+version: "1"
+admission:
+  require_authentication: true
+  require_authorization: true
+  require_rate_limit: true
+  require_ai_policy: true
+  require_cost_policy: true
+  require_data_policy: true
+audit:
+  required: true
+default_decision: DENY
