@@ -1,4 +1,5 @@
 """Small, deterministic failure-injection checks for runtime guard behavior."""
+
 from __future__ import annotations
 
 
@@ -23,4 +24,5 @@ def run_failure_matrix() -> dict:
 
 if __name__ == "__main__":
     import json
+
     print(json.dumps(run_failure_matrix(), indent=2))
