@@ -38,7 +38,12 @@ def test_gateway_endpoint_accepts_authenticated_request(text, monkeypatch):
         },
     )
     assert response.status_code == 200
-    assert response.json() == {"allowed": True, "reason": "ok"}
+    body = response.json()
+    assert body["allowed"] is True
+    assert body["reason"] == "ok"
+    assert body["evidence"]["request_id"]
+    assert body["evidence"]["decision"] == "ALLOW"
+    assert body["evidence"]["latency_ms"] >= 0
 
 
 def test_rejects_missing_credentials():
