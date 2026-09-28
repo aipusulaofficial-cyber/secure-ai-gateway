@@ -18,3 +18,5 @@ jobs:
       python-version: "3.12"
       run-tests: true
       run-build: true
+
+# Shared contract dependencies refreshed.
