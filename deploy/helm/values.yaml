@@ -1,6 +1,9 @@
 replicaCount: 2
 image: {repository: secure-ai-gateway, tag: 0.1.0, pullPolicy: IfNotPresent}
 service: {port: 80}
+jwtSecret:
+  existingSecret: ai-gateway-auth
+  key: jwt-secret
 autoscaling: {enabled: true, minReplicas: 2, maxReplicas: 10, targetCPUUtilizationPercentage: 70}
 resources:
   requests: {cpu: 100m, memory: 128Mi}
