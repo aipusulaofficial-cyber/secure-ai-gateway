@@ -24,12 +24,13 @@ def test_shared_quota_across_distinct_clients():
     principal = uuid4().hex
     assert first.ping() and second.ping()
     with ThreadPoolExecutor(max_workers=12) as pool:
-        accepted = list(pool.map(
-            lambda n: (first if n % 2 else second).allow(principal), range(40)
-        ))
+        accepted = list(
+            pool.map(lambda n: (first if n % 2 else second).allow(principal), range(40))
+        )
     assert accepted.count(True) == 5
     assert not second.allow(principal)
     assert first.allow(uuid4().hex)
+
 
 def test_strict_gateway_quota_uses_verified_jwt_subject(monkeypatch):
     import jwt
@@ -50,7 +51,8 @@ def test_strict_gateway_quota_uses_verified_jwt_subject(monkeypatch):
     monkeypatch.setattr("service.configured_limiter", lambda url: StubLimiter())
     token = jwt.encode(
         {"sub": "verified-principal", "scope": "inference", "exp": 4102444800},
-        "integration-secret", algorithm="HS256",
+        "integration-secret",
+        algorithm="HS256",
     )
     client = TestClient(app)
     payload = {"token": f"Bearer {token}", "scope": "inference"}
