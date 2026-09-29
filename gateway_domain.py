@@ -23,7 +23,7 @@ class RateLimiter:
         self._lock = RLock()
 
     def allow(self, key: str, now: float | None = None) -> bool:
-        if not isinstance(key, str) or not key.strip():
+        if not isinstance(key, str) or not key:
             raise ValueError("rate limit key is required")
         current = time.monotonic() if now is None else now
         if not math.isfinite(current):
