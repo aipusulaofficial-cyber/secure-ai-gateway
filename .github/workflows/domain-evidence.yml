@@ -23,6 +23,7 @@ jobs:
           python -m pip install --disable-pip-version-check -e ".[dev]"
       - name: Execute gateway domain evidence
         run: |
+          set -o pipefail
           mkdir -p artifacts
           python benchmarks/gateway_evidence.py | tee artifacts/gateway-evidence.json
       - name: Validate evidence JSON
