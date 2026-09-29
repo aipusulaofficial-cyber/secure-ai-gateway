@@ -1,3 +1,4 @@
+import os
 import time
 
 from fastapi import FastAPI, HTTPException
@@ -29,6 +30,8 @@ def live():
 
 @app.get("/health/ready")
 def ready():
+    if not os.getenv("AI_GATEWAY_JWT_SECRET"):
+        raise HTTPException(status_code=503, detail="authentication_not_configured")
     return {"status": "ready"}
 
 
