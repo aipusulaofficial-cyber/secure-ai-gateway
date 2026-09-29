@@ -49,7 +49,12 @@ def authorize(token: str, required_scope: str) -> Decision:
         )
     except jwt.PyJWTError:
         return Decision(False, "invalid_credentials")
+    subject = claims.get("sub")
+    if not isinstance(subject, str) or not subject.strip():
+        return Decision(False, "invalid_credentials")
     raw_scopes = claims.get("scope", "")
-    scopes = set(raw_scopes.split()) if isinstance(raw_scopes, str) else set(raw_scopes or [])
+    if not isinstance(raw_scopes, str):
+        return Decision(False, "invalid_credentials")
+    scopes = set(raw_scopes.split())
     allowed = required_scope in scopes
     return Decision(allowed, "ok" if allowed else "insufficient_scope")
