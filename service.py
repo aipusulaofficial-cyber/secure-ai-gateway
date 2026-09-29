@@ -1,17 +1,17 @@
 import os
 import time
 
+import jwt
 from fastapi import FastAPI, HTTPException
 from fastapi import Request as FastAPIRequest
 from opentelemetry import trace
 from pydantic import BaseModel, Field
-import jwt
 from redis.exceptions import RedisError
-from shared_limiter import configured_limiter
 
 from gateway_domain import RateLimiter, authorize
 from observability import PrincipalObservabilityMiddleware, configure_observability, get_logger
 from runtime_evidence import request_id_from_headers, runtime_evidence
+from shared_limiter import configured_limiter
 
 configure_observability()
 logger = get_logger(__name__)
