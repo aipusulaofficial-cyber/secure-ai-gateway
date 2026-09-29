@@ -30,6 +30,13 @@ spec:
                 secretKeyRef:
                   name: ai-gateway-auth
                   key: jwt-secret
+            - name: AI_GATEWAY_REQUIRE_SHARED_LIMITER
+              value: "1"
+            - name: AI_GATEWAY_REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ai-gateway-auth
+                  key: redis-url
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
