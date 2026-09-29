@@ -1,5 +1,7 @@
+import math
 import os
 import time
+from threading import Lock
 from dataclasses import dataclass
 
 import jwt
@@ -18,18 +20,22 @@ class RateLimiter:
         self.limit = limit
         self.window_s = window_s
         self._hits: dict[str, list[float]] = {}
+        self._lock = Lock()
 
     def allow(self, key: str, now: float | None = None) -> bool:
         if not key:
             raise ValueError("rate limit key is required")
         current = time.monotonic() if now is None else now
-        hits = [t for t in self._hits.get(key, []) if current - t < self.window_s]
-        if len(hits) >= self.limit:
+        if not isinstance(current, (int, float)) or not math.isfinite(current):
+            raise ValueError("rate-limit time must be finite")
+        with self._lock:
+            hits = [t for t in self._hits.get(key, []) if current - t < self.window_s]
+            if len(hits) >= self.limit:
+                self._hits[key] = hits
+                return False
+            hits.append(current)
             self._hits[key] = hits
-            return False
-        hits.append(current)
-        self._hits[key] = hits
-        return True
+            return True
 
 
 def authorize(token: str, required_scope: str) -> Decision:
@@ -50,6 +56,11 @@ def authorize(token: str, required_scope: str) -> Decision:
     except jwt.PyJWTError:
         return Decision(False, "invalid_credentials")
     raw_scopes = claims.get("scope", "")
-    scopes = set(raw_scopes.split()) if isinstance(raw_scopes, str) else set(raw_scopes or [])
+    if isinstance(raw_scopes, str):
+        scopes = set(raw_scopes.split())
+    elif isinstance(raw_scopes, list) and all(isinstance(s, str) for s in raw_scopes):
+        scopes = set(raw_scopes)
+    else:
+        return Decision(False, "invalid_credentials")
     allowed = required_scope in scopes
     return Decision(allowed, "ok" if allowed else "insufficient_scope")
