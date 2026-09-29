@@ -1,9 +1,10 @@
 """Atomic fleet-wide rate limiting using Redis server time."""
+
+import hashlib
 from functools import lru_cache
 from uuid import uuid4
 
 from redis import Redis
-
 
 # EVAL is atomic within one Redis shard; every key uses one fixed hash tag.
 _SCRIPT = """
@@ -34,7 +35,6 @@ class RedisSlidingLimiter:
     def allow(self, subject: str) -> bool:
         if not subject or not subject.strip():
             raise ValueError("verified subject required")
-        import hashlib
         key = "gateway:{rate}:" + hashlib.sha256(subject.encode("utf-8")).hexdigest()
         nonce = uuid4().hex
         return bool(self.client.eval(_SCRIPT, 1, key, self.window_ms, self.limit, nonce))
