@@ -91,6 +91,8 @@ def handle(request: Request, http_request: FastAPIRequest):
                 request.payload.get("token", ""),
                 request.payload.get("scope", "inference"),
             )
+            if os.getenv("AI_GATEWAY_REQUIRE_SHARED_LIMITER") == "1" and decision.allowed:
+                enforce_shared_quota(request.payload.get("token", ""))
             logger.info(
                 "gateway_decision key=%s allowed=%s reason=%s",
                 request.key,
