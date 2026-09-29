@@ -51,7 +51,7 @@ def ready():
 def handle(request: Request, http_request: FastAPIRequest):
     started = time.perf_counter()
     request_id = request_id_from_headers(http_request.headers)
-    if not rate_limiter.allow(request.key):
+    if os.getenv("AI_GATEWAY_REQUIRE_SHARED_LIMITER") != "1" and not rate_limiter.allow(request.key):
         evidence = runtime_evidence(
             request_id=request_id,
             stage="gateway.rate_limit",
