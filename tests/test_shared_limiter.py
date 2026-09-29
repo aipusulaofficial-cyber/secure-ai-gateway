@@ -33,6 +33,7 @@ def test_shared_quota_across_distinct_clients():
 def test_strict_gateway_quota_uses_verified_jwt_subject(monkeypatch):
     import jwt
     from fastapi.testclient import TestClient
+
     from service import app
 
     subjects = []
