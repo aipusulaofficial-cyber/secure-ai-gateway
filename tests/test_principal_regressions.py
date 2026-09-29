@@ -34,6 +34,7 @@ def test_header_request_id_validation():
         assert actual != value
         UUID(actual)
 
+
 def test_rate_limit_refuses_backward_and_nonfinite_clock():
     import pytest
 
