@@ -33,3 +33,28 @@ def test_header_request_id_validation():
         actual = request_id_from_headers({"x-request-id": value})
         assert actual != value
         UUID(actual)
+
+def test_rate_limit_refuses_backward_and_nonfinite_clock():
+    import pytest
+
+    from gateway_domain import RateLimiter
+
+    limiter = RateLimiter(limit=2, window_s=5.0)
+    assert limiter.allow("client", now=10.0)
+    with pytest.raises(ValueError):
+        limiter.allow("client", now=9.0)
+    with pytest.raises(ValueError):
+        limiter.allow("client", now=float("nan"))
+    assert limiter.allow("client", now=10.1)
+    assert not limiter.allow("client", now=10.2)
+
+
+def test_rate_limit_parallel_calls_are_atomic():
+    from concurrent.futures import ThreadPoolExecutor
+
+    from gateway_domain import RateLimiter
+
+    limiter = RateLimiter(limit=5)
+    with ThreadPoolExecutor(max_workers=16) as executor:
+        outcomes = list(executor.map(lambda _: limiter.allow("shared"), range(100)))
+    assert outcomes.count(True) == 5
