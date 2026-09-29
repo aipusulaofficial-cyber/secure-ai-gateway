@@ -56,6 +56,10 @@ def test_strict_gateway_quota_uses_verified_jwt_subject(monkeypatch):
     )
     client = TestClient(app)
     payload = {"token": f"Bearer {token}", "scope": "inference"}
-    assert client.post("/v1/gateway", json={"key": "spoof-a", "payload": payload}).status_code == 200
-    assert client.post("/v1/gateway", json={"key": "spoof-b", "payload": payload}).status_code == 429
+    assert (
+        client.post("/v1/gateway", json={"key": "spoof-a", "payload": payload}).status_code == 200
+    )
+    assert (
+        client.post("/v1/gateway", json={"key": "spoof-b", "payload": payload}).status_code == 429
+    )
     assert subjects == ["verified-principal", "verified-principal"]
