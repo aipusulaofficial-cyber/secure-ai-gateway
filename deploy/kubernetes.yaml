@@ -24,6 +24,12 @@ spec:
           image: secure-ai-gateway:0.1.0
           imagePullPolicy: IfNotPresent
           ports: [{containerPort: 8000}]
+          env:
+            - name: AI_GATEWAY_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ai-gateway-auth
+                  key: jwt-secret
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
