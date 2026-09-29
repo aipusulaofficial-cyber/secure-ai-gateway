@@ -47,6 +47,28 @@ def ready():
     return {"status": "ready"}
 
 
+def enforce_shared_quota(token: str) -> None:
+    url = os.getenv("AI_GATEWAY_REDIS_URL")
+    secret = os.getenv("AI_GATEWAY_JWT_SECRET")
+    if not url or not secret:
+        raise HTTPException(status_code=503, detail="shared_limiter_not_configured")
+    claims = jwt.decode(
+        token.removeprefix("Bearer ").strip(),
+        secret,
+        algorithms=["HS256"],
+        options={"require": ["sub", "exp"]},
+    )
+    subject = claims.get("sub")
+    if not isinstance(subject, str) or not subject.strip():
+        raise HTTPException(status_code=401, detail="invalid_credentials")
+    try:
+        allowed = configured_limiter(url).allow(subject)
+    except RedisError as exc:
+        raise HTTPException(status_code=503, detail="shared_limiter_unavailable") from exc
+    if not allowed:
+        raise HTTPException(status_code=429, detail="shared_quota_exceeded")
+
+
 @app.post("/v1/gateway")
 def handle(request: Request, http_request: FastAPIRequest):
     started = time.perf_counter()
