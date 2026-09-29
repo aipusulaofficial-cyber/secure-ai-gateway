@@ -59,3 +59,27 @@ def test_rate_limit_parallel_calls_are_atomic():
     with ThreadPoolExecutor(max_workers=16) as executor:
         outcomes = list(executor.map(lambda _: limiter.allow("shared"), range(100)))
     assert outcomes.count(True) == 5
+
+
+def test_readiness_fails_closed_without_jwt_verification_key(monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from service import app
+
+    monkeypatch.delenv("AI_GATEWAY_JWT_SECRET", raising=False)
+    client = TestClient(app)
+    assert client.get("/health/live").status_code == 200
+    response = client.get("/health/ready")
+    assert response.status_code == 503
+    assert response.json()["detail"] == "authentication_not_configured"
+
+
+def test_readiness_succeeds_with_jwt_verification_key(monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from service import app
+
+    monkeypatch.setenv("AI_GATEWAY_JWT_SECRET", "test-key")
+    response = TestClient(app).get("/health/ready")
+    assert response.status_code == 200
+    assert response.json()["status"] == "ready"
