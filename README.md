@@ -31,3 +31,6 @@ The repository includes Kubernetes/Helm deployment, Terraform, production tests,
 - ADRs: [ADRs](ADRs/)
 
 CI, production tests and security/SBOM checks are executable release gates.
+
+## Portfolio evidence
+[Portfolio evidence map](docs/PORTFOLIO_EVIDENCE.md) — executable proof, architecture mapping and reviewable CI evidence.
