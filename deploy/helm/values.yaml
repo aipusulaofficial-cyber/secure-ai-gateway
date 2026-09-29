@@ -4,6 +4,10 @@ service: {port: 80}
 jwtSecret:
   existingSecret: ai-gateway-auth
   key: jwt-secret
+redisSecret:
+  existingSecret: ai-gateway-auth
+  key: redis-url
+requireSharedLimiter: true
 autoscaling: {enabled: true, minReplicas: 2, maxReplicas: 10, targetCPUUtilizationPercentage: 70}
 resources:
   requests: {cpu: 100m, memory: 128Mi}
