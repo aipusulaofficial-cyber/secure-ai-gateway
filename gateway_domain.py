@@ -1,8 +1,8 @@
 import math
 import os
 import time
-from threading import Lock
 from dataclasses import dataclass
+from threading import Lock
 
 import jwt
 
