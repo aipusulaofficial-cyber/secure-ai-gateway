@@ -22,6 +22,7 @@ def test_blank_subject_fails_closed(monkeypatch):
     )
     assert not authorize(f"Bearer {token}", "model:write").allowed
 
+
 def test_header_request_id_validation():
     from uuid import UUID
 
