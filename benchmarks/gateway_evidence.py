@@ -1,7 +1,7 @@
 import json
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import jwt
 
@@ -21,7 +21,11 @@ denied = authorize(f"Bearer {token}", "admin")
 missing = authorize("not-a-bearer", "inference")
 
 limiter = RateLimiter(2, 10)
-rate_results = [limiter.allow("client", now=0), limiter.allow("client", now=1), limiter.allow("client", now=2)]
+rate_results = [
+    limiter.allow("client", now=0),
+    limiter.allow("client", now=1),
+    limiter.allow("client", now=2),
+]
 
 report = {
     "authorized": authorized.allowed,
