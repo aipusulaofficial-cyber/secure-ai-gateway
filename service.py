@@ -5,6 +5,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi import Request as FastAPIRequest
 from opentelemetry import trace
 from pydantic import BaseModel, Field
+import jwt
+from redis.exceptions import RedisError
+from shared_limiter import configured_limiter
 
 from gateway_domain import RateLimiter, authorize
 from observability import PrincipalObservabilityMiddleware, configure_observability, get_logger
@@ -32,6 +35,15 @@ def live():
 def ready():
     if not os.getenv("AI_GATEWAY_JWT_SECRET"):
         raise HTTPException(status_code=503, detail="authentication_not_configured")
+    if os.getenv("AI_GATEWAY_REQUIRE_SHARED_LIMITER") == "1":
+        url = os.getenv("AI_GATEWAY_REDIS_URL")
+        if not url:
+            raise HTTPException(status_code=503, detail="shared_limiter_not_configured")
+        try:
+            if not configured_limiter(url).ping():
+                raise HTTPException(status_code=503, detail="shared_limiter_unavailable")
+        except RedisError as exc:
+            raise HTTPException(status_code=503, detail="shared_limiter_unavailable") from exc
     return {"status": "ready"}
 
 
