@@ -1,5 +1,10 @@
 # Secure AI Gateway
 
+[![CI](https://github.com/aipusulaofficial-cyber/secure-ai-gateway/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aipusulaofficial-cyber/secure-ai-gateway/actions/workflows/ci.yml)
+[![Production Tests](https://github.com/aipusulaofficial-cyber/secure-ai-gateway/actions/workflows/production-tests.yml/badge.svg?branch=main)](https://github.com/aipusulaofficial-cyber/secure-ai-gateway/actions/workflows/production-tests.yml)
+[![Security / SBOM](https://github.com/aipusulaofficial-cyber/secure-ai-gateway/actions/workflows/security-sbom.yml/badge.svg?branch=main)](https://github.com/aipusulaofficial-cyber/secure-ai-gateway/actions/workflows/security-sbom.yml)
+
+
 A security boundary for AI services providing authentication, authorization, rate limiting, policy enforcement, threat-aware request handling and auditability.
 
 ## Request flow
