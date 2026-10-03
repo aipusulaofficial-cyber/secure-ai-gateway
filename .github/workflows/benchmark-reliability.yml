@@ -23,7 +23,7 @@ jobs:
           mkdir -p artifacts
           python benchmarks/run_benchmark.py --iterations 1000 | tee artifacts/benchmark.json
       - name: Upload measured evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark-evidence
           path: artifacts/benchmark.json
