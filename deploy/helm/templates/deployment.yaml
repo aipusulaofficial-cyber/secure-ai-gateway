@@ -17,6 +17,19 @@ spec:
      image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
      imagePullPolicy: {{ .Values.image.pullPolicy }}
      ports: [{containerPort: 8000}]
+     env:
+       - name: AI_GATEWAY_JWT_SECRET
+         valueFrom:
+           secretKeyRef:
+             name: {{ .Values.jwtSecret.existingSecret | quote }}
+             key: {{ .Values.jwtSecret.key | quote }}
+       - name: AI_GATEWAY_REQUIRE_SHARED_LIMITER
+         value: {{ ternary "1" "0" .Values.requireSharedLimiter | quote }}
+       - name: AI_GATEWAY_REDIS_URL
+         valueFrom:
+           secretKeyRef:
+             name: {{ .Values.redisSecret.existingSecret | quote }}
+             key: {{ .Values.redisSecret.key | quote }}
      securityContext:
       allowPrivilegeEscalation: false
       readOnlyRootFilesystem: true
