@@ -22,8 +22,19 @@ jobs:
         run: |
           mkdir -p artifacts
           python benchmarks/run_benchmark.py --iterations 1000 | tee artifacts/benchmark.json
+      - name: Gateway HTTP evidence
+        run: |
+          python benchmarks/gateway_evidence.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("artifacts/gateway-evidence.json").read_text())
+          if report["error_rate"] != 0:
+              raise SystemExit(f"gateway evidence failed: {report['error_rate']}")
+          print(f"gateway evidence passed: p95_ms={report['latency_ms']['p95']} p99_ms={report['latency_ms']['p99']}")
+          PY
       - name: Upload measured evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: benchmark-evidence
-          path: artifacts/benchmark.json
+          path: artifacts/*.json
