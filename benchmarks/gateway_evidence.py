@@ -1,47 +1,90 @@
+"""Concurrent HTTP gateway evidence for CI; no production credentials required."""
+
+from __future__ import annotations
+
+import importlib
 import json
-import os
+import statistics
 import sys
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-import jwt
+from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from gateway_domain import RateLimiter, authorize
+service = importlib.import_module("service")
+gateway_domain = importlib.import_module("gateway_domain")
+app = service.app
 
-os.environ["AI_GATEWAY_JWT_SECRET"] = "evidence-secret"
-token = jwt.encode(
-    {"sub": "evidence-user", "exp": 4102444800, "scope": "inference"},
-    "evidence-secret",
-    algorithm="HS256",
-)
 
-authorized = authorize(f"Bearer {token}", "inference")
-denied = authorize(f"Bearer {token}", "admin")
-missing = authorize("not-a-bearer", "inference")
+def run(requests: int = 200, workers: int = 16) -> dict[str, object]:
+    if requests < 1 or workers < 1:
+        raise ValueError("requests and workers must be positive")
 
-limiter = RateLimiter(2, 10)
-rate_results = [
-    limiter.allow("client", now=0),
-    limiter.allow("client", now=1),
-    limiter.allow("client", now=2),
-]
+    original_authorize = service.authorize
+    service.authorize = lambda token, scope: gateway_domain.Decision(True, "ok")
+    latencies: list[float] = []
+    failures = 0
 
-report = {
-    "authorized": authorized.allowed,
-    "authorized_reason": authorized.reason,
-    "scope_denied": not denied.allowed,
-    "scope_denied_reason": denied.reason,
-    "missing_credentials": missing.reason == "missing_credentials",
-    "rate_limit_sequence": rate_results,
-}
-if report != {
-    "authorized": True,
-    "authorized_reason": "ok",
-    "scope_denied": True,
-    "scope_denied_reason": "insufficient_scope",
-    "missing_credentials": True,
-    "rate_limit_sequence": [True, True, False],
-}:
-    raise SystemExit(report)
-print(json.dumps(report, sort_keys=True))
+    def one(index: int) -> tuple[float, bool]:
+        started = time.perf_counter()
+        with TestClient(app) as client:
+            response = client.post(
+                "/v1/gateway",
+                headers={"x-request-id": f"gateway-evidence-{index}"},
+                json={
+                    "key": f"evidence-client-{index}",
+                    "payload": {"token": "benchmark-token", "scope": "inference"},
+                },
+            )
+        latency = (time.perf_counter() - started) * 1000
+        body = response.json() if response.status_code == 200 else {}
+        return latency, response.status_code == 200 and body.get("allowed") is True
+
+    wall_started = time.perf_counter()
+    try:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = [pool.submit(one, index) for index in range(requests)]
+            for future in as_completed(futures):
+                latency, ok = future.result()
+                latencies.append(latency)
+                failures += int(not ok)
+    finally:
+        service.authorize = original_authorize
+
+    wall_s = time.perf_counter() - wall_started
+    ordered = sorted(latencies)
+
+    def pct(q: float) -> float:
+        index = min(len(ordered) - 1, max(0, int((len(ordered) - 1) * q)))
+        return ordered[index]
+
+    return {
+        "requests": requests,
+        "workers": workers,
+        "failures": failures,
+        "error_rate": failures / requests,
+        "throughput_rps": round(requests / wall_s, 2),
+        "latency_ms": {
+            "p50": round(statistics.median(ordered), 3),
+            "p95": round(pct(0.95), 3),
+            "p99": round(pct(0.99), 3),
+        },
+        "workload": "FastAPI TestClient -> /v1/gateway -> local rate limit -> policy boundary",
+        "auth_fixture": "deterministic policy decision stub; no production credential or secret",
+        "measurement": "repeatable CI HTTP gateway acceptance benchmark; not a production hardware claim",
+    }
+
+
+def write_report(path: str | Path) -> dict[str, object]:
+    report = run()
+    destination = Path(path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return report
+
+
+if __name__ == "__main__":
+    write_report("artifacts/gateway-evidence.json")

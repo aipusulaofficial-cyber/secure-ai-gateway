@@ -10,20 +10,31 @@ jobs:
   evidence:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
       - name: Install test runner
-        run: python -m pip install --disable-pip-version-check pytest
+        run: python -m pip install --disable-pip-version-check pytest -r requirements-prod.txt
       - name: Failure injection tests
         run: python -m pytest reliability/test_failure_injection.py -q
       - name: Benchmark harness
         run: |
           mkdir -p artifacts
           python benchmarks/run_benchmark.py --iterations 1000 | tee artifacts/benchmark.json
+      - name: Gateway HTTP evidence
+        run: |
+          python benchmarks/gateway_evidence.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("artifacts/gateway-evidence.json").read_text())
+          if report["error_rate"] != 0:
+              raise SystemExit(f"gateway evidence failed: {report['error_rate']}")
+          print(f"gateway evidence passed: p95_ms={report['latency_ms']['p95']} p99_ms={report['latency_ms']['p99']}")
+          PY
       - name: Upload measured evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: benchmark-evidence
-          path: artifacts/benchmark.json
+          path: artifacts/*.json
