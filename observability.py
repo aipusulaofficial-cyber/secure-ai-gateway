@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import sys
 import time
 import uuid
 
@@ -34,9 +35,9 @@ def configure_observability():
                 )
             )
         except ImportError:
-            provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
+            provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter(out=sys.stderr)))
     else:
-        provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
+        provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter(out=sys.stderr)))
     trace.set_tracer_provider(provider)
 
 
